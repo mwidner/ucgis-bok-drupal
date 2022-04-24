@@ -1,0 +1,53 @@
+version: '3'
+
+services:
+  webapp:
+    container_name: ${COMPOSE_PROJECT_NAME}-webapp-container
+    build:
+      context: ./webapp
+      args:
+        - WEB_USER=${WEB_USER}
+        - WEB_GROUP=${WEB_GROUP}
+        - APACHE_ROOT_DIR=${APACHE_ROOT_DIR}
+        - APACHE_WEBROOT=${APACHE_WEBROOT}
+    volumes:
+      - ../public_html/:${APACHE_WEBROOT}
+      - ../container-files/logs/apache:${APACHE_ROOT_DIR}/logs
+    ports:
+      - ${APACHE_EXPOSED_PORT}:80
+      - 443:443
+    environment:
+      - APACHE_EXPOSED_PORT=${APACHE_EXPOSED_PORT}
+      - APACHE_ROOT_DIR=${APACHE_ROOT_DIR}
+      - APACHE_WEBROOT=${APACHE_WEBROOT}
+      - WEB_USER=${WEB_USER}
+      - WEB_GROUP=${WEB_GROUP}
+      - DB_CLIENT=1
+      - DB_USER=${MYSQL_ROOT_USER}
+      - DB_PASS=${MYSQL_ROOT_PASSWORD}
+      - DB_HOST=${COMPOSE_PROJECT_NAME}-mysql-container
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+  mysql:
+    container_name: ${COMPOSE_PROJECT_NAME}-mysql-container
+    build:
+      context: ./mysql
+      args:
+        - MYSQL_CONTAINER_USER=${MYSQL_CONTAINER_USER}
+        - MYSQL_CONTAINER_GROUP=${MYSQL_CONTAINER_GROUP}
+    volumes:
+      - ../container-files/logs/mysql:${MYSQL_LOG_DIR}
+      - ../container-files/database:${MYSQL_DATA_DIR}
+    ports:
+      - ${MYSQL_EXPOSED_PORT}:3306
+    environment:
+      - MYSQL_CONTAINER_USER=${MYSQL_CONTAINER_USER}
+      - MYSQL_CONTAINER_GROUP=${MYSQL_CONTAINER_GROUP}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+    command: mysqld --max_allowed_packet=1073741824
+    deploy:
+      resources:
+        limits:
+          memory: 1g
