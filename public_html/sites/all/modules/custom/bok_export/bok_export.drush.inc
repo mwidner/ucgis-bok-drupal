@@ -80,7 +80,7 @@ class BibliographicReference {
     $data['name'] = cleanString($reference->reference);
     $data['description'] = '';
     $data['url'] = '';
-    $data['isExternalResourceOf'] = $reference->isReferenceOf;
+    $data['isExternalResourceOf'] = array_unique($reference->isReferenceOf);
     return $data;
   }
 }
