@@ -26,8 +26,8 @@ class Node {
   public $title;
   /** @var string $name */
   public $name;
-  /** @var string $summary */
-  public $summary;
+  /** @var string $definition */
+  public $definition;
   /** @var string $definitions */
   public $definitions;
   /** @var string $content */
@@ -43,7 +43,7 @@ class Node {
     $data['label'] = cleanString($node->title);
     $data['code'] = cleanString($node->code);
     $data['nodeName'] = cleanString($node->name);
-    $data['summary'] = cleanString($node->summary);
+    $data['definition'] = cleanString($node->definition);
     $data['content'] = cleanString($node->content);
     return $data;
   }
@@ -109,7 +109,7 @@ class LearningOutcome {
   public static function serialize(LearningOutcome $learningOutcome): array
   {
     $data = [];
-    $data['label'] = utf8_encode(substr($learningOutcome->label, 0, 25));
+    $data['label'] = utf8_encode(substr($learningOutcome->label, 0, 255));
     $data['definition'] = cleanString($learningOutcome->label);
     $data['isLearningOutcomeOf'] = $learningOutcome->isLearningOutcomeOf;
     return $data;
@@ -267,7 +267,7 @@ function drush_bok_export($path = null) {
       $node->title = $topicNode->title;
       $node->code = $topicCode;
       $node->name = 'https://gistbok.ucgis.org' . $url;
-      $node->summary = $topicNode->body && $topicNode->body['und'] ? strip_tags($topicNode->body['und'][0]['value']) : null;
+      $node->definition = $topicNode->body && $topicNode->body['und'] ? strip_tags($topicNode->body['und'][0]['value']) : null;
 
       $node->content = $topicNode->field_topic_contents && $topicNode->field_topic_contents['und'] ? strip_tags($topicNode->field_topic_contents['und'][0]['value']) : null;
 
