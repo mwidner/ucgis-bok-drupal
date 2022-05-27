@@ -206,13 +206,16 @@ function drush_bok_export($path = null) {
     $node->name = 'https://gistbok.ucgis.org' . url('taxonomy/' . $knowledgeArea->tid);
     $data['nodes'][] = Node::serialize($node);
 
-    $limit = drush_get_option('limit') ?? 100;
     $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', 'node')
       ->entityCondition('bundle', 'topics')
       ->propertyCondition('status', NODE_PUBLISHED)
-      ->fieldCondition('field_tag_1', 'tid', $knowledgeArea->tid)
-      ->range(1, $limit);
+      ->fieldCondition('field_tag_1', 'tid', $knowledgeArea->tid);
+
+    $limit = drush_get_option('limit') ?? null;
+    if ($limit) {
+      $query->range(1, $limit);
+    }
 
     $result = $query->execute();
 
