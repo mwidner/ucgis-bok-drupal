@@ -195,6 +195,12 @@ function drush_bok_export($path = null) {
   $topicNames = [];
   $bibliography = [];
 
+  // Create a top-level node
+  $node = new Node();
+  $node->id = $nodeId;
+  $node->title = 'UCGIS';
+  $data['nodes'][] = Node::serialize($node);
+
   // The knowledge areas are a taxonomy with id 15 in the BoK site
   $knowledgeAreas = taxonomy_get_tree(15);
   // Load all the knowledge areas as nodes
@@ -233,7 +239,7 @@ function drush_bok_export($path = null) {
       $topicCount++;
 
       // Go to the next knowledge area's nodes
-      if ($topicCount > 100) {
+      if ($limit && $topicCount > $limit) {
         $topicCount = 0;
         break;
       }
@@ -280,7 +286,10 @@ function drush_bok_export($path = null) {
         $biblioDoc = new DOMDocument();
         $biblioDoc->loadHtml($biblioContent);
         foreach($biblioDoc->getElementsByTagName('p') as $line) {
-          $entry = strip_tags(trim($line->textContent));
+          $entry = trim(strip_tags($line->textContent));
+          if (empty($entry)) {
+            continue;
+          }
           if (!isset($bibliography[md5($entry)])) {
             $biblioObject = new BibliographicReference();
             $biblioObject->reference = $entry;
@@ -331,7 +340,11 @@ function drush_bok_export($path = null) {
 
 
   foreach ($bibliography as $item) {
-    $data['external_resources'][] = BibliographicReference::serialize($item);
+    $resource = BibliographicReference::serialize($item);
+    if (empty(trim($resource['name']))) {
+      continue;
+    }
+    $data['external_resources'][] = $resource;
   }
 
   print(count($data['external_resources']) . " biblio\n");
