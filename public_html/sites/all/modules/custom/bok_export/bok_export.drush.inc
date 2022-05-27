@@ -157,17 +157,12 @@ function cleanString(?string $string = null): string
   if (!$string) {
     return '';
   }
-  return utf8_encode(
-    str_replace(
-      [PHP_EOL, "\r\t", "\x80\x9c"],
-      '',
-      str_replace(
-        ["\xc2\xa0"],
-        ' ',
-        strip_tags(html_entity_decode($string))
-      )
-    )
-  );
+  $string = str_replace(['&lsquo;', '&rsquo;'], "'", $string);
+  $string = str_replace(['&amp;'], "&", $string);
+  $string = str_replace('&nbsp;', ' ', $string);
+  $string = str_replace([PHP_EOL, "\r\t", "\r"], ' ', $string);
+  $string = strip_tags($string);
+  return addslashes($string);
 }
 
 /**
@@ -278,7 +273,7 @@ function drush_bok_export($path = null) {
       $node->name = 'https://gistbok.ucgis.org' . $url;
       $node->definition = $topicNode->body && $topicNode->body['und'] ? strip_tags($topicNode->body['und'][0]['value']) : null;
 
-      $node->content = $topicNode->field_topic_contents && $topicNode->field_topic_contents['und'] ? strip_tags($topicNode->field_topic_contents['und'][0]['value']) : null;
+      $node->content = $topicNode->field_topic_contents && $topicNode->field_topic_contents['und'] ? $topicNode->field_topic_contents['und'][0]['value'] : null;
 
       // Split up bibliography entries
       $biblioContent = $topicNode->field_bibliography['und'][0]['value'] ?? null;
