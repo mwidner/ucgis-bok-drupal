@@ -44,7 +44,7 @@ class Node {
     $data['code'] = cleanString($node->code);
     $data['nodeName'] = cleanString($node->name);
     $data['definition'] = cleanString($node->definition);
-    $data['content'] = cleanString($node->content);
+    $data['content'] = $node->content;
     return $data;
   }
 }
@@ -77,10 +77,10 @@ class BibliographicReference {
   public static function serialize(BibliographicReference $reference): array
   {
     $data = [];
-    $data['title'] = cleanString($reference->reference);
+    $data['name'] = cleanString($reference->reference);
     $data['description'] = '';
     $data['url'] = '';
-    $data['isExternalReferenceOf'] = $reference->isReferenceOf;
+    $data['isExternalResourceOf'] = $reference->isReferenceOf;
     return $data;
   }
 }
@@ -331,10 +331,10 @@ function drush_bok_export($path = null) {
 
 
   foreach ($bibliography as $item) {
-    $data['bibliography'][] = BibliographicReference::serialize($item);
+    $data['external_resources'][] = BibliographicReference::serialize($item);
   }
 
-  print(count($data['bibliography']) . " biblio\n");
+  print(count($data['external_resources']) . " biblio\n");
 
   $jsonData = json_encode($data, JSON_UNESCAPED_SLASHES & JSON_INVALID_UTF8_IGNORE & JSON_UNESCAPED_UNICODE);
   if (!$jsonData) {
