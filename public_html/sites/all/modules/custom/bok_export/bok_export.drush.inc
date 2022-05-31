@@ -4,10 +4,12 @@
  * A Drush command to export data from the UCGIS BoK Drupal 7 site
  * into a JSON format that can be imported to the Living Textbook.
  *
- * Usage: drush bok-export --limit=100 <FILENAME>
+ * Usage: drush bok-export --limit=100 -s <FILENAME>
  *
  * Generates a JSON file at the given FILENAME path
  * Use --limit option to restrict the max number of records. Default: 100
+ *
+ * Use -s to strip HTML tags
  */
 
 // ~/PhpstormProjects/bok/public_html$ ../drush bok-export --limit=100 ./export-21-12-20.json
@@ -33,7 +35,7 @@ class Node {
   /** @var string $content */
   public $content;
 
-  public static function serialize(Node $node): array
+  public static function serialize(Node $node, bool $isStripTags = false): array
   {
     $data = [];
 
@@ -44,7 +46,7 @@ class Node {
     $data['code'] = cleanString($node->code);
     $data['nodeName'] = cleanString($node->name);
     $data['definition'] = cleanString($node->definition);
-    $data['content'] = $node->content;
+    $data['content'] = $isStripTags ? cleanString($node->content) : $node->content;
     return $data;
   }
 }
@@ -141,7 +143,8 @@ function bok_export_drush_command(): array
         'path' => 'Path to store export file.'
       ],
       'options' => [
-        'limit' => 'Limit export to number of records'
+        'limit' => 'Limit export to number of records',
+        's' => 'Strip HTML tags'
       ]
     ]
   ];
@@ -185,6 +188,8 @@ function drush_bok_export($path = null) {
   $learningOutcomes = [];
   libxml_use_internal_errors(true);
 
+  $stripTags = drush_get_option('s') ?? false;
+
   $nodeId = 0;
   $topicCount = 0;
   $topicNames = [];
@@ -194,7 +199,7 @@ function drush_bok_export($path = null) {
   $node = new Node();
   $node->id = $nodeId;
   $node->title = 'UCGIS';
-  $data['nodes'][] = Node::serialize($node);
+  $data['nodes'][] = Node::serialize($node, $stripTags);
 
   // The knowledge areas are a taxonomy with id 15 in the BoK site
   $knowledgeAreas = taxonomy_get_tree(15);
@@ -205,7 +210,7 @@ function drush_bok_export($path = null) {
     $node = new Node();
     $node->title = $knowledgeArea->name;
     $node->name = 'https://gistbok.ucgis.org' . url('taxonomy/' . $knowledgeArea->tid);
-    $data['nodes'][] = Node::serialize($node);
+    $data['nodes'][] = Node::serialize($node, $stripTags);
 
     $query = new EntityFieldQuery();
     $query->entityCondition('entity_type', 'node')
@@ -294,7 +299,7 @@ function drush_bok_export($path = null) {
         }
       }
 
-      $data['nodes'][] = Node::serialize($node);
+      $data['nodes'][] = Node::serialize($node, $stripTags);
 
       // Parse links
       $link = new Link();
