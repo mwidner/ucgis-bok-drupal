@@ -144,7 +144,8 @@ function bok_export_drush_command(): array
       ],
       'options' => [
         'limit' => 'Limit export to number of records',
-        's' => 'Strip HTML tags'
+        'strip' => 'Strip HTML tags',
+        'ka' => 'Limit to a specific knowledge area'
       ]
     ]
   ];
@@ -188,7 +189,7 @@ function drush_bok_export($path = null) {
   $learningOutcomes = [];
   libxml_use_internal_errors(true);
 
-  $stripTags = drush_get_option('s') ?? false;
+  $stripTags = drush_get_option('strip') ?? false;
 
   $nodeId = 0;
   $topicCount = 0;
@@ -200,12 +201,23 @@ function drush_bok_export($path = null) {
   $node->id = $nodeId;
   $node->title = 'UCGIS';
   $data['nodes'][] = Node::serialize($node, $stripTags);
+  ++$nodeId;
+
+  $kAChosen = drush_get_option('ka') ?? null;
 
   // The knowledge areas are a taxonomy with id 15 in the BoK site
   $knowledgeAreas = taxonomy_get_tree(15);
   // Load all the knowledge areas as nodes
   foreach ($knowledgeAreas as $knowledgeArea) {
+    if ($kAChosen && $knowledgeArea->tid !== $kAChosen) {
+      continue;
+    }
     $ka[$knowledgeArea->tid] = $nodeId;
+    // Link each knowledge area to the root node
+    $link = new Link();
+    $link->source = $nodeId;
+    $link->target = 0;
+    $data['links'][] = Link::serialize($link);
 
     $node = new Node();
     $node->title = $knowledgeArea->name;
